@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adás-Vétel Kalkulátor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 28px;
+      color: #f8fafc;
+      letter-spacing: 0.5px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1000px;
+      margin: 0 auto 28px;
+    }
+
+    @media (max-width: 680px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 20px;
+      border: 1px solid #334155;
+    }
+
+    .panel h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel.buy h2  { color: #34d399; }
+    .panel.sell h2 { color: #f87171; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.2fr auto;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .form-row { grid-template-columns: 1fr 1fr; }
+      .form-row .btn-add { grid-column: span 2; }
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #60a5fa;
+    }
+
+    input::placeholder { color: #64748b; }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    button:hover  { opacity: 0.88; }
+    button:active { transform: scale(0.96); }
+
+    .btn-add.buy  { background: #059669; color: #fff; }
+    .btn-add.sell { background: #dc2626; color: #fff; }
+
+    .btn-remove {
+      background: #334155;
+      color: #94a3b8;
+      padding: 4px 8px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+    }
+
+    .btn-remove:hover { background: #ef4444; color: #fff; }
+
+    .item-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .item-list::-webkit-scrollbar { width: 5px; }
+    .item-list::-webkit-scrollbar-track { background: transparent; }
+    .item-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+    .item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 8px;
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.88rem;
+      border: 1px solid #1e3a5f;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .item.buy-item  { border-color: #064e3b; }
+    .item.sell-item { border-color: #450a0a; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .item-name { font-weight: 500; color: #cbd5e1; }
+    .item-qty  { color: #94a3b8; font-size: 0.82rem; }
+
+    .item-price.buy  { color: #34d399; font-weight: 600; }
+    .item-price.sell { color: #f87171; font-weight: 600; }
+
+    .item-detail { display: flex; flex-direction: column; gap: 2px; }
+
+    .empty-msg {
+      text-align: center;
+      color: #475569;
+      font-size: 0.85rem;
+      padding: 18px 0;
+    }
+
+    /* Summary */
+    .summary {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 22px 24px;
+      border: 1px solid #334155;
+    }
+
+    .summary h2 {
+      font-size: 1.05rem;
+      color: #94a3b8;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 500px) {
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+
+    .summary-card {
+      background: #0f172a;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+
+    .summary-label {
+      font-size: 0.78rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+    }
+
+    .summary-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .summary-value.buy   { color: #34d399; }
+    .summary-value.sell  { color: #f87171; }
+    .summary-value.pos   { color: #facc15; }
+    .summary-value.neg   { color: #ef4444; }
+    .summary-value.zero  { color: #94a3b8; }
+
+    .currency { font-size: 0.9rem; margin-left: 3px; color: #64748b; }
+
+    .btn-reset {
+      display: block;
+      margin: 20px auto 0;
+      background: #1e293b;
+      color: #64748b;
+      border: 1px solid #334155;
+      padding: 8px 24px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .btn-reset:hover { color: #ef4444; border-color: #ef4444; }
+  </style>
+</head>
+<body>
+
+<h1>Adás-Vétel Kalkulátor</h1>
+
+<div class="grid">
+
+  <!-- VÉTEL (vásárlás) -->
+  <div class="panel buy">
+    <h2>&#x2B07; Vásárlás (vétel)</h2>
+    <div class="form-row">
+      <input type="text"   id="buy-name"  placeholder="Megnevezés" />
+      <input type="number" id="buy-qty"   placeholder="Db" min="1" value="1" />
+      <input type="number" id="buy-price" placeholder="Egységár" min="0" step="0.01" />
+      <button class="btn-add buy" onclick="addItem('buy')">+ Hozzáad</button>
+    </div>
+    <ul class="item-list" id="buy-list">
+      <li class="empty-msg" id="buy-empty">Még nincs vásárolt tétel.</li>
+    </ul>
+  </div>
+
+  <!-- ELADÁS -->
+  <div class="panel sell">
+    <h2>&#x2B06; Eladás</h2>
+    <div class="form-row">
+      <input type="text"   id="sell-name"  placeholder="Megnevezés" />
+      <input type="number" id="sell-qty"   placeholder="Db" min="1" value="1" />
+      <input type="number" id="sell-price" placeholder="Egységár" min="0" step="0.01" />
+      <button class="btn-add sell" onclick="addItem('sell')">+ Hozzáad</button>
+    </div>
+    <ul class="item-list" id="sell-list">
+      <li class="empty-msg" id="sell-empty">Még nincs eladott tétel.</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ÖSSZESÍTŐ -->
+<div class="summary">
+  <h2>Összesítő</h2>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-label">Összes vétel</div>
+      <div class="summary-value buy" id="total-buy">0<span class="currency">Ft</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Összes eladás</div>
+      <div class="summary-value sell" id="total-sell">0<span class="currency">Ft</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Eredmény (nyereség / veszteség)</div>
+      <div class="summary-value zero" id="total-profit">0<span class="currency">Ft</span></div>
+    </div>
+  </div>
+  <button class="btn-reset" onclick="resetAll()">Mindent töröl</button>
+</div>
+
+<script>
+  const state = { buy: [], sell: [] };
+
+  function fmt(n) {
+    return n.toLocaleString('hu-HU', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+
+  function addItem(type) {
+    const name  = document.getElementById(`${type}-name`).value.trim();
+    const qty   = parseFloat(document.getElementById(`${type}-qty`).value);
+    const price = parseFloat(document.getElementById(`${type}-price`).value);
+
+    if (!name)        { alert('Kérlek add meg a megnevezést!'); return; }
+    if (!qty  || qty  <= 0) { alert('A darabszám legyen nagyobb nullánál!'); return; }
+    if (isNaN(price) || price < 0) { alert('Kérlek adj meg érvényes árat!'); return; }
+
+    state[type].push({ id: Date.now() + Math.random(), name, qty, price });
+
+    document.getElementById(`${type}-name`).value  = '';
+    document.getElementById(`${type}-qty`).value   = '1';
+    document.getElementById(`${type}-price`).value = '';
+    document.getElementById(`${type}-name`).focus();
+
+    render();
+  }
+
+  function removeItem(type, id) {
+    state[type] = state[type].filter(i => i.id !== id);
+    render();
+  }
+
+  function render() {
+    ['buy', 'sell'].forEach(type => {
+      const list  = document.getElementById(`${type}-list`);
+      const empty = document.getElementById(`${type}-empty`);
+      const items = state[type];
+
+      // Remove all item elements (keep the empty msg node)
+      Array.from(list.querySelectorAll('.item')).forEach(el => el.remove());
+
+      if (items.length === 0) {
+        empty.style.display = '';
+      } else {
+        empty.style.display = 'none';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.className = `item ${type}-item`;
+          const total = item.qty * item.price;
+          li.innerHTML = `
+            <div class="item-detail">
+              <span class="item-name">${escHtml(item.name)}</span>
+              <span class="item-qty">${fmt(item.qty)} db &times; ${fmt(item.price)} Ft</span>
+            </div>
+            <span class="item-price ${type}">${fmt(total)} Ft</span>
+            <button class="btn-remove" onclick="removeItem('${type}', ${item.id})">&#x2715;</button>
+          `;
+          list.appendChild(li);
+        });
+      }
+    });
+
+    const totalBuy  = state.buy.reduce((s, i)  => s + i.qty * i.price, 0);
+    const totalSell = state.sell.reduce((s, i) => s + i.qty * i.price, 0);
+    const profit    = totalSell - totalBuy;
+
+    document.getElementById('total-buy').innerHTML  = `${fmt(totalBuy)}<span class="currency">Ft</span>`;
+    document.getElementById('total-sell').innerHTML = `${fmt(totalSell)}<span class="currency">Ft</span>`;
+
+    const profitEl = document.getElementById('total-profit');
+    profitEl.innerHTML = `${profit >= 0 ? '+' : ''}${fmt(profit)}<span class="currency">Ft</span>`;
+    profitEl.className = `summary-value ${profit > 0 ? 'pos' : profit < 0 ? 'neg' : 'zero'}`;
+  }
+
+  function resetAll() {
+    if (!confirm('Biztosan törölsz mindent?')) return;
+    state.buy  = [];
+    state.sell = [];
+    render();
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Enter key support
+  ['buy-name','buy-qty','buy-price'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') addItem('buy');
+    });
+  });
+  ['sell-name','sell-qty','sell-price'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') addItem('sell');
+    });
+  });
+</script>
+
+</body>
+</html>
